@@ -3,6 +3,7 @@ import { saveRecent } from './App'
 import { request, useEvent } from './lib/api'
 import { rentangTanggal, rupiah } from './lib/format'
 import type { Ctx, Member, Modul } from './lib/types'
+import { RingkasanDialog } from './RingkasanDialog'
 import { Bawa } from './tabs/Bawa'
 import { Bayar } from './tabs/Bayar'
 import { Itinerary } from './tabs/Itinerary'
@@ -21,6 +22,7 @@ export default function EventPage({ token }: { token: string }) {
   const [meId, setMeId] = useState<string | null>(null)
   const [skip, setSkip] = useState(false)
   const [tab, setTab] = useState<Modul | null>(null)
+  const [ringkasan, setRingkasan] = useState(false)
   const eventId = data?.event.id
 
   useEffect(() => {
@@ -49,7 +51,7 @@ export default function EventPage({ token }: { token: string }) {
   return (
     <main className="mx-auto flex max-w-md flex-col gap-4 p-4 pb-12">
       <header>
-        <h1 className="text-2xl font-bold">{data.event.nama}</h1>
+        <NamaAcara c={{ d: data, admin, me, call, act }} />
         <Tanggal c={{ d: data, admin, me, call, act }} />
         <p className="text-sm">
           {me ? <>Halo, <b>{me.nama}</b> · </> : null}{admin ? 'Admin' : 'Anggota'}
@@ -62,6 +64,9 @@ export default function EventPage({ token }: { token: string }) {
         <p className="text-3xl font-bold">{rupiah(data.ringkasan.iuranPerOrang)}</p>
         <p className="text-sm">Total kebutuhan {rupiah(data.ringkasan.total)}</p>
       </Card>
+
+      <Btn warna="langit" onClick={() => setRingkasan(true)}>Bagikan ringkasan (gambar)</Btn>
+      {ringkasan && <RingkasanDialog d={data} onClose={() => setRingkasan(false)} />}
 
       {data.event.linkLampiran.length > 0 && (
         <div className="flex flex-wrap gap-2">
@@ -165,6 +170,36 @@ function Tanggal({ c }: { c: Ctx }) {
         <Btn kecil warna="mint" type="submit" disabled={salah}>Simpan</Btn>
         <Btn kecil warna="krem" type="button" onClick={() => setEdit(false)}>Batal</Btn>
       </div>
+    </form>
+  )
+}
+
+function NamaAcara({ c }: { c: Ctx }) {
+  const [edit, setEdit] = useState(false)
+  const [nama, setNama] = useState(c.d.event.nama)
+  if (!edit) {
+    return (
+      <h1 className="text-2xl font-bold">
+        {c.d.event.nama}
+        {c.admin && (
+          <button className="ml-2 text-sm font-normal underline" onClick={() => { setNama(c.d.event.nama); setEdit(true) }}>ubah nama</button>
+        )}
+      </h1>
+    )
+  }
+  return (
+    <form
+      className="my-2 flex gap-2"
+      onSubmit={(e) => {
+        e.preventDefault()
+        const n = nama.trim()
+        if (n && n !== c.d.event.nama) c.act(() => c.call('PATCH', '', { nama: n }))
+        setEdit(false)
+      }}
+    >
+      <Input autoFocus onFocus={(e) => e.target.select()} value={nama} onChange={(e) => setNama(e.target.value)} aria-label="Nama acara" />
+      <Btn kecil warna="mint" type="submit">Simpan</Btn>
+      <Btn kecil warna="krem" type="button" onClick={() => setEdit(false)}>Batal</Btn>
     </form>
   )
 }
