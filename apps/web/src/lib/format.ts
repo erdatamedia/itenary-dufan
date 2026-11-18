@@ -9,3 +9,10 @@ export function tanggalHari(mulai: string | null, hari: number) {
 }
 
 export const subtotal = (i: { harga: number; qty: number }) => Math.round(i.harga * i.qty)
+
+const fmt = (s: string) => new Date(`${s}T00:00:00`).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+export function rentangTanggal(mulai: string | null, selesai: string | null) {
+  if (!mulai && !selesai) return null
+  if (mulai && selesai && mulai !== selesai) return `${fmt(mulai)} – ${fmt(selesai)}`
+  return fmt((mulai ?? selesai)!)
+}

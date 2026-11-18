@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { saveRecent } from './App'
 import { request, useEvent } from './lib/api'
-import { rupiah } from './lib/format'
+import { rentangTanggal, rupiah } from './lib/format'
 import type { Ctx, Member, Modul } from './lib/types'
 import { Bawa } from './tabs/Bawa'
 import { Bayar } from './tabs/Bayar'
@@ -50,6 +50,7 @@ export default function EventPage({ token }: { token: string }) {
     <main className="mx-auto flex max-w-md flex-col gap-4 p-4 pb-12">
       <header>
         <h1 className="text-2xl font-bold">{data.event.nama}</h1>
+        <Tanggal c={{ d: data, admin, me, call, act }} />
         <p className="text-sm">
           {me ? <>Halo, <b>{me.nama}</b> · </> : null}{admin ? 'Admin' : 'Anggota'}
           {me && <button className="ml-2 underline" onClick={() => { try { localStorage.removeItem(`me:${data.event.id}`) } catch { /* abaikan */ } setMeId(null); setSkip(false) }}>ganti</button>}
@@ -123,5 +124,47 @@ function Identitas(p: {
       </Card>
       {p.admin && <Btn warna="krem" onClick={p.lewati}>Lewati, hanya lihat</Btn>}
     </main>
+  )
+}
+
+function Tanggal({ c }: { c: Ctx }) {
+  const { tanggalMulai, tanggalSelesai } = c.d.event
+  const [edit, setEdit] = useState(false)
+  const [f, setF] = useState({ mulai: '', selesai: '' })
+  const teks = rentangTanggal(tanggalMulai, tanggalSelesai)
+
+  if (!edit) {
+    return (
+      <p className="text-sm">
+        📅 {teks ?? 'Tanggal belum diatur'}
+        {c.admin && (
+          <button className="ml-2 underline" onClick={() => { setF({ mulai: tanggalMulai ?? '', selesai: tanggalSelesai ?? '' }); setEdit(true) }}>ubah tanggal</button>
+        )}
+      </p>
+    )
+  }
+  const salah = !!f.mulai && !!f.selesai && f.selesai < f.mulai
+  return (
+    <form
+      className="my-2 flex flex-col gap-2 rounded-lg border-[3px] border-tinta bg-white p-3"
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (salah) return
+        c.act(() => c.call('PATCH', '', { tanggalMulai: f.mulai || null, tanggalSelesai: f.selesai || null }))
+        setEdit(false)
+      }}
+    >
+      <label className="text-sm font-bold">Tanggal mulai
+        <Input type="date" value={f.mulai} onChange={(e) => setF({ ...f, mulai: e.target.value })} />
+      </label>
+      <label className="text-sm font-bold">Tanggal selesai
+        <Input type="date" value={f.selesai} min={f.mulai || undefined} onChange={(e) => setF({ ...f, selesai: e.target.value })} />
+      </label>
+      {salah && <p className="text-sm font-bold">Tanggal selesai tidak boleh sebelum tanggal mulai.</p>}
+      <div className="flex gap-2">
+        <Btn kecil warna="mint" type="submit" disabled={salah}>Simpan</Btn>
+        <Btn kecil warna="krem" type="button" onClick={() => setEdit(false)}>Batal</Btn>
+      </div>
+    </form>
   )
 }
