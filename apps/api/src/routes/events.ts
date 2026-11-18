@@ -180,14 +180,13 @@ ev.post("/groups/:id/items", async (c) => {
   return c.json(db.insert(items).values({ groupId: c.req.param("id"), ...p.data }).returning().get(), 201);
 });
 
-// Anggota hanya boleh klaim (pjMemberId) dan ubah status. Admin boleh semua field.
+// Anggota dan admin boleh mengubah item (nama, harga, qty, klaim, status). Hapus tetap hanya admin.
 ev.patch("/items/:id", async (c) => {
   const e = c.get("event");
-  const admin = c.get("role") === "admin";
-  const claim = { status: STATUS.optional(), pjMemberId: z.string().nullable().optional() };
-  const p = await body(c, (admin
-    ? z.object({ ...claim, nama: nama.optional(), harga: z.number().int().min(0).optional(), qty: z.number().positive().optional() })
-    : z.object(claim)).strict());
+  const p = await body(c, z.object({
+    nama: nama.optional(), harga: z.number().int().min(0).optional(), qty: z.number().positive().optional(),
+    status: STATUS.optional(), pjMemberId: z.string().nullable().optional(),
+  }).strict());
   if (!p.success || !itemOf(e.id, c.req.param("id")) || !memberOrNull(e.id, p.data.pjMemberId))
     return c.json({ error: "Tidak valid" }, 400);
   if (Object.keys(p.data).length) db.update(items).set(p.data).where(eq(items.id, c.req.param("id"))).run();

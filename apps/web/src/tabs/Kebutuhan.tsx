@@ -49,7 +49,7 @@ function Baris({ item, c }: { item: Item; c: Ctx }) {
         <div className="flex gap-2">
           <Btn kecil warna="mint" onClick={() => { c.act(() => c.call('PATCH', `/items/${item.id}`, { nama: f.nama, harga: Number(f.harga), qty: Number(f.qty) })); setEdit(false) }}>Simpan</Btn>
           <Btn kecil warna="krem" onClick={() => setEdit(false)}>Batal</Btn>
-          <Btn kecil warna="oranye" onClick={() => confirm('Hapus item?') && c.act(() => c.call('DELETE', `/items/${item.id}`))}>Hapus</Btn>
+          {c.admin && <Btn kecil warna="oranye" onClick={() => confirm('Hapus item?') && c.act(() => c.call('DELETE', `/items/${item.id}`))}>Hapus</Btn>}
         </div>
       </div>
     )
@@ -62,7 +62,7 @@ function Baris({ item, c }: { item: Item; c: Ctx }) {
       </div>
       <div className="flex items-center gap-2">
         <span className="font-bold">{rupiah(subtotal(item))}</span>
-        {c.admin && <Btn kecil warna="krem" onClick={() => setEdit(true)}>Edit</Btn>}
+        <Btn kecil warna="krem" onClick={() => setEdit(true)}>Edit</Btn>
       </div>
     </div>
   )
