@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { rupiah } from '../lib/format'
-import type { Ctx } from '../lib/types'
+import type { Ctx, Member } from '../lib/types'
 import { Badge, Btn, Card, Input, Judul } from '../ui'
 
 export function Bayar(c: Ctx) {
@@ -21,7 +21,7 @@ export function Bayar(c: Ctx) {
         return (
           <Card key={m.id} warna="krem">
             <div className="flex items-center justify-between gap-2">
-              <p className="font-bold">{m.nama}</p>
+              <NamaPeserta m={m} c={c} />
               <Badge warna={p?.lunas ? 'mint' : 'oranye'}>{p?.lunas ? 'Lunas' : 'Belum'}</Badge>
             </div>
             <p className="text-sm">Dibayar {rupiah(p?.nominal ?? 0)}</p>
@@ -50,5 +50,34 @@ export function Bayar(c: Ctx) {
       )}
       {!c.admin && <Judul>Status diubah oleh admin</Judul>}
     </section>
+  )
+}
+
+function NamaPeserta({ m, c }: { m: Member; c: Ctx }) {
+  const [edit, setEdit] = useState(false)
+  const [nama, setNama] = useState(m.nama)
+  if (!edit) {
+    return (
+      <p className="font-bold">
+        {m.nama}
+        {c.admin && (
+          <button className="ml-2 text-sm font-normal underline" onClick={() => { setNama(m.nama); setEdit(true) }}>ubah nama</button>
+        )}
+      </p>
+    )
+  }
+  return (
+    <form
+      className="flex flex-1 gap-2"
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (nama.trim() && nama.trim() !== m.nama) c.act(() => c.call('PATCH', `/members/${m.id}`, { nama: nama.trim() }))
+        setEdit(false)
+      }}
+    >
+      <Input autoFocus onFocus={(e) => e.target.select()} value={nama} onChange={(e) => setNama(e.target.value)} aria-label={`Nama baru untuk ${m.nama}`} />
+      <Btn kecil warna="mint" type="submit">Simpan</Btn>
+      <Btn kecil warna="krem" type="button" onClick={() => setEdit(false)}>Batal</Btn>
+    </form>
   )
 }
