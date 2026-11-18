@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000" # hanya reverse proxy di host yang boleh mengakses
+    environment:
+      CREATE_KEY: ${CREATE_KEY:?isi CREATE_KEY di .env}
+    volumes:
+      - dufan-data:/data
+volumes:
+  dufan-data:
